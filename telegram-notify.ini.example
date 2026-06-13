@@ -1,0 +1,11 @@
+[default]
+bot_token = 1234567890:AAA_DEFAULT_TOKEN
+chat_id = 188488206
+
+[infra]
+bot_token = 1234567890:BBB_INFRA_TOKEN
+chat_id = 222222222
+
+[personal]
+bot_token = 1234567890:CCC_PERSONAL_TOKEN
+chat_id = 333333333
