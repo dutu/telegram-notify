@@ -1,0 +1,25 @@
+[Unit]
+Description=Telegram notification HTTP gateway
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User=telegram-gateway
+Group=telegram-gateway
+
+WorkingDirectory=/opt/telegram-notify
+ExecStart=/usr/bin/env python3 /opt/telegram-notify/telegram-gateway.py
+
+Restart=on-failure
+RestartSec=5
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_INET AF_INET6
+
+[Install]
+WantedBy=multi-user.target

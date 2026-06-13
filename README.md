@@ -1,15 +1,18 @@
 # telegram-notify
 
-Small local Telegram notification helper for Linux servers.
+Small Telegram notification toolkit for Linux servers.
 
-It sends Telegram messages from shell scripts, cron jobs, systemd services, backup jobs, UPS alerts, monitoring scripts, and other local automation.
+It provides two entry points that share the same config and Telegram delivery code:
 
-No daemon, no webserver, no listening port.
+- `telegram-notify.py`: local CLI for shell scripts, cron jobs, systemd hooks, backup jobs, UPS alerts, and monitoring scripts.
+- `telegram-gateway.py`: optional local HTTP-to-Telegram gateway for tools that can only send webhooks.
+
+The CLI has no daemon, no webserver, and no listening port. The gateway is a separate optional service and should only be enabled when HTTP access is needed.
 
 ## Features
 
-- Simple local CLI
-- Multiple destinations
+- Shared Telegram profile configuration
+- Multiple Telegram bot destinations
 - Telegram HTML formatting
 - Telegram MarkdownV2 formatting
 - Notification levels
@@ -17,67 +20,57 @@ No daemon, no webserver, no listening port.
 - Forum topic/thread support
 - Web page preview control
 - Inline URL buttons
-- Single Python file
-- No external Python dependencies
+- Optional local HTTP API
+- Basic HTTP authentication via shared secret
+- systemd service example for the gateway
+- Python standard library only
 
 ## Repository layout
 
 ```text
 telegram-notify/
 ├── README.md
+├── README_CLI.md
+├── README_GATEWAY.md
+├── telegram_notify_core.py
 ├── telegram-notify.py
+├── telegram-gateway.py
+├── telegram-gateway.service.example
 └── telegram-notify.ini.example
 ```
 
-## Installation
+## Which component should I use?
 
-Clone the repository:
-
-```bash
-cd /opt
-
-git clone https://github.com/YOUR_USERNAME/telegram-notify.git
-
-cd /opt/telegram-notify
-```
-
-Copy the example config:
+Use the CLI when the sender is local and can execute a command:
 
 ```bash
-cp telegram-notify.ini.example telegram-notify.ini
+telegram-notify infra --level error "Backup failed"
 ```
 
-Edit the config:
+Use the gateway only when a tool needs HTTP access:
 
 ```bash
-nano telegram-notify.ini
+curl \
+  -s \
+  -X POST \
+  http://127.0.0.1:8484/notify \
+  -H "Content-Type: application/json" \
+  -H "X-Notify-Token: CHANGE_ME_TO_A_LONG_RANDOM_SECRET" \
+  -d '{
+    "profile": "infra",
+    "level": "error",
+    "text": "Backup failed"
+  }'
 ```
 
-Set permissions:
+## Documentation
 
-```bash
-chown root:root /opt/telegram-notify/telegram-notify.py
-chmod 755 /opt/telegram-notify/telegram-notify.py
+- CLI setup and usage: [README_CLI.md](README_CLI.md)
+- HTTP gateway setup and usage: [README_GATEWAY.md](README_GATEWAY.md)
 
-chown root:root /opt/telegram-notify/telegram-notify.ini
-chmod 600 /opt/telegram-notify/telegram-notify.ini
-```
+## Shared configuration
 
-Create a symlink:
-
-```bash
-ln -s /opt/telegram-notify/telegram-notify.py /usr/local/bin/telegram-notify
-```
-
-Verify:
-
-```bash
-telegram-notify --help
-```
-
-## Configuration
-
-Create:
+Both entry points use the same config file:
 
 ```bash
 /opt/telegram-notify/telegram-notify.ini
@@ -86,6 +79,11 @@ Create:
 Example:
 
 ```ini
+[gateway]
+api_token = CHANGE_ME_TO_A_LONG_RANDOM_SECRET
+listen_host = 127.0.0.1
+listen_port = 8484
+
 [default]
 bot_token = 1234567890:AAA_DEFAULT_TOKEN
 chat_id = 188488206
@@ -99,182 +97,27 @@ bot_token = 1234567890:CCC_PERSONAL_TOKEN
 chat_id = 333333333
 ```
 
-Each section is a destination.
-
-A destination defines:
-
-- `bot_token`
-- `chat_id`
-
-## Basic usage
-
-```bash
-telegram-notify infra "Backup completed"
-```
-
-```bash
-telegram-notify personal "Server rebooted"
-```
-
-```bash
-telegram-notify default "Test message"
-```
-
-## Notification levels
-
-Use `--level` to prepend a status symbol to the message.
-
-Available levels:
-
-- `info` prepends `▫`
-- `warning` prepends `🔸`
-- `error` prepends `🔺`
-
-Examples:
-
-```bash
-telegram-notify infra --level info "Backup completed"
-```
-
-```bash
-telegram-notify infra --level warning "Disk usage is above 80%"
-```
-
-```bash
-telegram-notify infra --level error "Backup failed"
-```
-
-## HTML messages
-
-```bash
-telegram-notify infra --html "<b>Backup failed</b> on NAS"
-```
-
-Telegram supports a limited HTML subset, including:
-
-```html
-<b>bold</b>
-<i>italic</i>
-<code>inline code</code>
-<pre>preformatted</pre>
-<a href="https://example.com">link</a>
-```
-
-## Silent notifications
-
-```bash
-telegram-notify infra --silent "Backup completed"
-```
-
-## Enable link previews
-
-By default, link previews are disabled.
-
-Enable them with:
-
-```bash
-telegram-notify infra --preview "https://example.com"
-```
-
-## Forum topic/thread
-
-For Telegram forum groups, send to a specific topic:
-
-```bash
-telegram-notify infra --thread-id 123 "UPS switched to battery"
-```
-
-## Inline button
-
-```bash
-telegram-notify infra \
-  --button "Open Kuma=https://kuma.example.com" \
-  "Kuma alert"
-```
-
-Multiple buttons:
-
-```bash
-telegram-notify infra \
-  --button "Open Kuma=https://kuma.example.com" \
-  --button "Open Proxmox=https://proxmox.example.com" \
-  "Infrastructure alert"
-```
-
-## Combined example
-
-```bash
-telegram-notify infra \
-  --level error \
-  --html \
-  --silent \
-  --thread-id 123 \
-  --button "Open Kuma=https://kuma.example.com" \
-  "<b>Kuma alert</b>: home-mt is down"
-```
-
-## Example from a shell script
-
-```bash
-#!/bin/bash
-
-set -e
-
-if ! systemctl is-active --quiet nginx; then
-  telegram-notify infra --html "<b>nginx is down</b> on $(hostname)"
-fi
-```
-
-## Example systemd service hook
-
-```ini
-[Service]
-ExecStartPost=/usr/local/bin/telegram-notify infra "Service started"
-ExecStopPost=/usr/local/bin/telegram-notify infra "Service stopped"
-```
-
-## Logs and debugging
-
-This tool does not keep its own log file.
-
-When used from systemd, errors appear in the journal of the calling service.
-
-Manual test:
-
-```bash
-telegram-notify infra "Test from $(hostname)"
-```
-
-If it fails, run:
-
-```bash
-/opt/telegram-notify/telegram-notify.py infra "Test message"
-```
+The `[gateway]` section is only required when running `telegram-gateway.py`.
 
 ## Security notes
 
-The config file contains Telegram bot tokens.
+The config file contains Telegram bot tokens and, optionally, the gateway API token.
 
-Recommended permissions:
+For CLI-only usage, root-only permissions are usually appropriate:
 
 ```bash
-chmod 600 /opt/telegram-notify/telegram-notify.ini
 chown root:root /opt/telegram-notify/telegram-notify.ini
+chmod 600 /opt/telegram-notify/telegram-notify.ini
 ```
 
-Do not commit the real config file to Git.
+For gateway usage with the dedicated `telegram-gateway` user, the service user must be able to read the same config:
 
-Only commit:
-
-```text
-telegram-notify.ini.example
+```bash
+chown root:telegram-gateway /opt/telegram-notify/telegram-notify.ini
+chmod 640 /opt/telegram-notify/telegram-notify.ini
 ```
 
-Add this to `.gitignore`:
-
-```text
-telegram-notify.ini
-```
+Keep the gateway bound to `127.0.0.1` unless you deliberately expose it behind proper firewalling and TLS.
 
 ## License
 
