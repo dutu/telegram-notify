@@ -12,6 +12,7 @@ No daemon, no webserver, no listening port.
 - Multiple destinations
 - Telegram HTML formatting
 - Telegram MarkdownV2 formatting
+- Notification levels
 - Silent notifications
 - Forum topic/thread support
 - Web page preview control
@@ -119,6 +120,30 @@ telegram-notify personal "Server rebooted"
 telegram-notify default "Test message"
 ```
 
+## Notification levels
+
+Use `--level` to prepend a status symbol to the message.
+
+Available levels:
+
+- `info` prepends `▫`
+- `warning` prepends `🔸`
+- `error` prepends `🔺`
+
+Examples:
+
+```bash
+telegram-notify infra --level info "Backup completed"
+```
+
+```bash
+telegram-notify infra --level warning "Disk usage is above 80%"
+```
+
+```bash
+telegram-notify infra --level error "Backup failed"
+```
+
 ## HTML messages
 
 ```bash
@@ -180,6 +205,7 @@ telegram-notify infra \
 
 ```bash
 telegram-notify infra \
+  --level error \
   --html \
   --silent \
   --thread-id 123 \

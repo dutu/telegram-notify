@@ -12,6 +12,12 @@ from urllib import parse, request
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = BASE_DIR / "telegram-notify.ini"
 
+LEVEL_PREFIXES = {
+    "info": "▫️",
+    "warning": "🔸",
+    "error": "🔺"
+}
+
 
 def fail(message):
     print(f"error: {message}", file=sys.stderr)
@@ -78,6 +84,13 @@ def build_reply_markup(buttons):
     }
 
 
+def format_message(text, level=None):
+    if not level:
+        return text
+
+    return f"{LEVEL_PREFIXES[level]} {text}"
+
+
 def send_message(bot_token, chat_id, text, args):
     telegram_url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
 
@@ -140,6 +153,12 @@ def parse_args():
     )
 
     parser.add_argument(
+        "--level",
+        choices=["info", "warning", "error"],
+        help="Prepend a status symbol based on severity level"
+    )
+
+    parser.add_argument(
         "--html",
         action="store_true",
         help="Use Telegram HTML parse mode"
@@ -194,6 +213,8 @@ def main():
 
     if not text:
         fail("message cannot be empty")
+
+    text = format_message(text, args.level)
 
     send_message(bot_token, chat_id, text, args)
 
