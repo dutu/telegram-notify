@@ -11,11 +11,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from telegram_notify_core import (
+    DEFAULT_DESTINATION,
     LEVEL_PREFIXES,
     PARSE_MODES,
     TelegramNotifyError,
     build_reply_markup,
     get_gateway_settings,
+    is_destination,
     load_config,
     send_notification,
 )
@@ -53,7 +55,7 @@ class TelegramGatewayHandler(BaseHTTPRequestHandler):
             payload = self.read_json_body()
             message = parse_notify_payload(payload)
 
-            if message["destination"] not in self.server.config:
+            if not is_destination(self.server.config, message["destination"]):
                 raise GatewayRequestError(f"profile not found: {message['destination']}")
         except GatewayRequestError as exc:
             self.send_json(400, {"status": "error", "error": str(exc)})
@@ -118,7 +120,7 @@ class TelegramGatewayHandler(BaseHTTPRequestHandler):
 
 
 def parse_notify_payload(payload):
-    destination = payload.get("profile", payload.get("destination", "default"))
+    destination = payload.get("profile", payload.get("destination", DEFAULT_DESTINATION))
     text = payload.get("text", payload.get("message"))
     level = payload.get("level")
     html = get_bool(payload, "html", False)

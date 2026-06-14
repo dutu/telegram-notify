@@ -100,6 +100,14 @@ If you also use the gateway, the same file may include a `[gateway]` section. Th
 
 ## Basic usage
 
+Send to the `[default]` destination:
+
+```bash
+telegram-notify "Backup completed"
+```
+
+Use a specific destination by putting the destination name before the message:
+
 ```bash
 telegram-notify infra "Backup completed"
 ```
@@ -109,8 +117,10 @@ telegram-notify personal "Server rebooted"
 ```
 
 ```bash
-telegram-notify default "Test message"
+telegram-notify "Test message"
 ```
+
+Destination detection is config-based. If the first argument matches a configured destination and there is more message text after it, it is treated as the destination. Otherwise, the whole message is sent to `[default]`.
 
 ## Notification levels
 
@@ -125,7 +135,7 @@ Available levels:
 Examples:
 
 ```bash
-telegram-notify infra --level info "Backup completed"
+telegram-notify --level info "Backup completed"
 ```
 
 ```bash
@@ -163,7 +173,7 @@ MarkdownV2 requires Telegram-specific escaping for reserved characters.
 ## Silent notifications
 
 ```bash
-telegram-notify infra --silent "Backup completed"
+telegram-notify --silent "Backup completed"
 ```
 
 ## Enable link previews
@@ -173,7 +183,7 @@ By default, link previews are disabled.
 Enable them with:
 
 ```bash
-telegram-notify infra --preview "https://example.com"
+telegram-notify --preview "https://example.com"
 ```
 
 ## Forum topic/thread
@@ -242,13 +252,13 @@ When used from systemd, errors appear in the journal of the calling service.
 Manual test:
 
 ```bash
-telegram-notify infra "Test from $(hostname)"
+telegram-notify "Test from $(hostname)"
 ```
 
 If it fails, run:
 
 ```bash
-/opt/telegram-notify/telegram-notify.py infra "Test message"
+/opt/telegram-notify/telegram-notify.py "Test message"
 ```
 
 ## Security notes

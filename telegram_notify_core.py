@@ -7,6 +7,7 @@ from urllib import error, parse, request
 
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = BASE_DIR / "telegram-notify.ini"
+DEFAULT_DESTINATION = "default"
 
 LEVEL_PREFIXES = {
     "info": "▫️",
@@ -33,8 +34,8 @@ def load_config(config_file=CONFIG_FILE):
     config = configparser.ConfigParser()
     config.read(path)
 
-    if "default" not in config:
-        raise TelegramNotifyError("missing [default] destination in config")
+    if DEFAULT_DESTINATION not in config:
+        raise TelegramNotifyError(f"missing [{DEFAULT_DESTINATION}] destination in config")
 
     return config
 
@@ -52,6 +53,18 @@ def get_destination(config, name):
         raise TelegramNotifyError(f"destination '{name}' is missing bot_token or chat_id")
 
     return bot_token, chat_id
+
+
+def is_destination(config, name):
+    if name not in config:
+        return False
+
+    section = config[name]
+
+    return bool(
+        section.get("bot_token", "").strip()
+        and section.get("chat_id", "").strip()
+    )
 
 
 def get_gateway_settings(config):

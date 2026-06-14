@@ -9,8 +9,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from telegram_notify_core import (
+    DEFAULT_DESTINATION,
     PARSE_MODES,
     TelegramNotifyError,
+    is_destination,
     load_config,
     send_notification,
 )
@@ -27,14 +29,9 @@ def parse_args():
     )
 
     parser.add_argument(
-        "destination",
-        help="Destination name from telegram-notify.ini, for example: infra"
-    )
-
-    parser.add_argument(
         "message",
         nargs="+",
-        help="Message text to send"
+        help="Message text to send, optionally prefixed with a destination name"
     )
 
     parser.add_argument(
@@ -80,7 +77,10 @@ def parse_args():
         help="Add inline button using TEXT=URL format. Can be used multiple times."
     )
 
-    args = parser.parse_args()
+    if hasattr(parser, "parse_intermixed_args"):
+        args = parser.parse_intermixed_args()
+    else:
+        args = parser.parse_args()
 
     if args.html and args.markdown:
         fail("use only one of --html or --markdown")
@@ -88,10 +88,15 @@ def parse_args():
     return args
 
 
+def resolve_destination_and_message(config, message_parts):
+    if len(message_parts) > 1 and is_destination(config, message_parts[0]):
+        return message_parts[0], " ".join(message_parts[1:]).strip()
+
+    return DEFAULT_DESTINATION, " ".join(message_parts).strip()
+
+
 def main():
     args = parse_args()
-
-    text = " ".join(args.message).strip()
 
     parse_mode = None
 
@@ -103,10 +108,11 @@ def main():
 
     try:
         config = load_config()
+        destination, text = resolve_destination_and_message(config, args.message)
 
         send_notification(
             config,
-            args.destination,
+            destination,
             text,
             level=args.level,
             parse_mode=parse_mode,

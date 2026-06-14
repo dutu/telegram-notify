@@ -44,7 +44,7 @@ telegram-notify/
 Use the CLI when the sender is local and can execute a command:
 
 ```bash
-telegram-notify infra --level error "Backup failed"
+telegram-notify --level error "Backup failed"
 ```
 
 Use the gateway only when a tool needs HTTP access:
