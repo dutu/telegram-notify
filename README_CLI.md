@@ -43,15 +43,15 @@ Edit the config:
 nano telegram-notify.ini
 ```
 
-Set permissions:
+Set config permissions:
 
 ```bash
-chown root:root /opt/telegram-notify/telegram-notify.py
-chmod 755 /opt/telegram-notify/telegram-notify.py
-
 chown root:root /opt/telegram-notify/telegram-notify.ini
 chmod 600 /opt/telegram-notify/telegram-notify.ini
 ```
+
+The executable bit for `telegram-notify.py` is tracked by Git, so you do not need
+to run `chmod` again after pulls.
 
 Create a symlink:
 

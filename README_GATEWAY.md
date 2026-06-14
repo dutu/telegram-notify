@@ -59,12 +59,8 @@ git clone https://github.com/YOUR_USERNAME/telegram-notify.git
 cd /opt/telegram-notify
 ```
 
-Set script permissions:
-
-```bash
-chown root:root /opt/telegram-notify/telegram-gateway.py
-chmod 755 /opt/telegram-notify/telegram-gateway.py
-```
+The executable bit for `telegram-gateway.py` is tracked by Git, so you do not
+need to run `chmod` again after pulls.
 
 ## Configure
 
