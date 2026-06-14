@@ -177,6 +177,9 @@ Required fields:
 
 - `text`: message text to send
 
+`<br>`, `<br/>`, and `<br />` in message text are normalized to newline
+characters before sending.
+
 Optional fields:
 
 - `profile`: destination from `telegram-notify.ini`; defaults to `default`

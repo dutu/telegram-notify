@@ -162,6 +162,9 @@ Telegram supports a limited HTML subset, including:
 <a href="https://example.com">link</a>
 ```
 
+`<br>`, `<br/>`, and `<br />` in message text are normalized to newline
+characters before sending.
+
 ## MarkdownV2 messages
 
 ```bash

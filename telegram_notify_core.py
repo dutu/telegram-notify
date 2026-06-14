@@ -1,5 +1,6 @@
 import configparser
 import json
+import re
 
 from pathlib import Path
 from urllib import error, parse, request
@@ -19,6 +20,8 @@ PARSE_MODES = {
     "html": "HTML",
     "markdown": "MarkdownV2",
 }
+
+BR_TAG_RE = re.compile(r"<br\s*/?>", re.IGNORECASE)
 
 
 class TelegramNotifyError(Exception):
@@ -109,6 +112,10 @@ def format_message(text, level=None):
     return f"{LEVEL_PREFIXES[level]} {text}"
 
 
+def normalize_message_text(text):
+    return BR_TAG_RE.sub("\n", str(text)).strip()
+
+
 def build_reply_markup(buttons):
     if not buttons:
         return None
@@ -168,7 +175,7 @@ def send_notification(
 ):
     bot_token, chat_id = get_destination(config, destination)
 
-    text = str(text).strip()
+    text = normalize_message_text(text)
 
     if not text:
         raise TelegramNotifyError("message cannot be empty")
