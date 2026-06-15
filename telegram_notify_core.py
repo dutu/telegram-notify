@@ -14,6 +14,7 @@ DEFAULT_LEVEL = "info"
 LEVEL_PREFIXES = {
     "debug": "🔍",
     "info": "▫️",
+    "notice": "🔹",
     "warning": "🔸",
     "error": "🔺",
     "crit": "🛑",
