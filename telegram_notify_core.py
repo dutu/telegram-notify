@@ -11,9 +11,11 @@ CONFIG_FILE = BASE_DIR / "telegram-notify.ini"
 DEFAULT_DESTINATION = "default"
 
 LEVEL_PREFIXES = {
+    "debug": "🔍",
     "info": "▫️",
     "warning": "🔸",
     "error": "🔺",
+    "crit": "🛑",
 }
 
 PARSE_MODES = {
@@ -102,14 +104,28 @@ def get_gateway_settings(config):
 
 
 def format_message(text, level=None):
+    level = normalize_level(level)
+
     if not level:
         return text
 
-    if level not in LEVEL_PREFIXES:
+    return f"{LEVEL_PREFIXES[level]} {text}"
+
+
+def normalize_level(level):
+    if level is None:
+        return None
+
+    normalized_level = str(level).strip().lower()
+
+    if not normalized_level:
+        return None
+
+    if normalized_level not in LEVEL_PREFIXES:
         levels = ", ".join(LEVEL_PREFIXES)
         raise TelegramNotifyError(f"invalid level '{level}', expected one of: {levels}")
 
-    return f"{LEVEL_PREFIXES[level]} {text}"
+    return normalized_level
 
 
 def normalize_message_text(text):

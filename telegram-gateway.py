@@ -12,13 +12,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from telegram_notify_core import (
     DEFAULT_DESTINATION,
-    LEVEL_PREFIXES,
     PARSE_MODES,
     TelegramNotifyError,
     build_reply_markup,
     get_gateway_settings,
     is_destination,
     load_config,
+    normalize_level,
     send_notification,
 )
 
@@ -136,9 +136,10 @@ def parse_notify_payload(payload):
     if not isinstance(text, str) or not text.strip():
         raise GatewayRequestError("text must be a non-empty string")
 
-    if level is not None and level not in LEVEL_PREFIXES:
-        levels = ", ".join(LEVEL_PREFIXES)
-        raise GatewayRequestError(f"level must be one of: {levels}")
+    try:
+        level = normalize_level(level)
+    except TelegramNotifyError as exc:
+        raise GatewayRequestError(str(exc)) from exc
 
     if html and markdown:
         raise GatewayRequestError("use only one of html or markdown")

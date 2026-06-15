@@ -128,9 +128,11 @@ Use `--level` to prepend a status symbol to the message.
 
 Available levels:
 
+- `debug` prepends `🔍`
 - `info` prepends `▫️`
 - `warning` prepends `🔸`
 - `error` prepends `🔺`
+- `crit` prepends `🛑`
 
 Examples:
 
@@ -139,11 +141,19 @@ telegram-notify --level info "Backup completed"
 ```
 
 ```bash
+telegram-notify --level debug "Debug details"
+```
+
+```bash
 telegram-notify infra --level warning "Disk usage is above 80%"
 ```
 
 ```bash
 telegram-notify infra --level error "Backup failed"
+```
+
+```bash
+telegram-notify infra --level crit "Database is unreachable"
 ```
 
 ## HTML messages

@@ -184,7 +184,7 @@ Optional fields:
 
 - `profile`: destination from `telegram-notify.ini`; defaults to `default`
 - `destination`: alias for `profile`
-- `level`: one of `info`, `warning`, or `error`
+- `level`: one of `debug`, `info`, `warning`, `error`, or `crit`
 - `html`: boolean; enables Telegram HTML parse mode
 - `markdown`: boolean; enables Telegram MarkdownV2 parse mode
 - `silent`: boolean; sends notification silently
