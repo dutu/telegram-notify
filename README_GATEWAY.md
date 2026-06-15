@@ -62,6 +62,57 @@ cd /opt/telegram-notify
 The executable bit for `telegram-gateway.py` is tracked by Git, so you do not
 need to run `chmod` again after pulls.
 
+## Updates
+
+Use one stable clone directory, for example:
+
+```bash
+/opt/telegram-notify
+```
+
+Update the installed code in place:
+
+```bash
+cd /opt/telegram-notify
+git status --short
+git pull --ff-only
+```
+
+Do not copy the example config again during updates:
+
+```bash
+cp /opt/telegram-notify/telegram-notify.ini.example /opt/telegram-notify/telegram-notify.ini
+```
+
+That command is only for first-time setup and may overwrite your real config.
+
+Your real config file is ignored by Git and should remain here:
+
+```bash
+/opt/telegram-notify/telegram-notify.ini
+```
+
+Avoid destructive cleanup commands such as:
+
+```bash
+git clean -fdx
+```
+
+That can delete ignored files, including `telegram-notify.ini`.
+
+Restart the gateway after updating code:
+
+```bash
+systemctl restart telegram-gateway.service
+```
+
+If the service example changed, review the difference before replacing the
+installed service:
+
+```bash
+diff -u /etc/systemd/system/telegram-gateway.service /opt/telegram-notify/telegram-gateway.service.example
+```
+
 ## Configure
 
 Create the shared config file:

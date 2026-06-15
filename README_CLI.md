@@ -65,6 +65,47 @@ Verify:
 telegram-notify --help
 ```
 
+## Updates
+
+Use one stable clone directory, for example:
+
+```bash
+/opt/telegram-notify
+```
+
+Update the installed code in place:
+
+```bash
+cd /opt/telegram-notify
+git status --short
+git pull --ff-only
+```
+
+Do not copy the example config again during updates:
+
+```bash
+cp telegram-notify.ini.example telegram-notify.ini
+```
+
+That command is only for first-time setup and may overwrite your real config.
+
+Your real config file is ignored by Git and should remain here:
+
+```bash
+/opt/telegram-notify/telegram-notify.ini
+```
+
+Avoid destructive cleanup commands such as:
+
+```bash
+git clean -fdx
+```
+
+That can delete ignored files, including `telegram-notify.ini`.
+
+The `/usr/local/bin/telegram-notify` symlink points to the script in the clone,
+so no reinstall is usually needed after `git pull`.
+
 ## Configuration
 
 Create:

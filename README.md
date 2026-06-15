@@ -99,6 +99,52 @@ chat_id = 333333333
 
 The `[gateway]` section is only required when running `telegram-gateway.py`.
 
+## Updates
+
+Keep the repository in a stable application directory, for example:
+
+```bash
+/opt/telegram-notify
+```
+
+Update the code in place:
+
+```bash
+cd /opt/telegram-notify
+git status --short
+git pull --ff-only
+```
+
+Your real config file is not tracked by Git:
+
+```bash
+/opt/telegram-notify/telegram-notify.ini
+```
+
+Do not rerun the initial config copy during updates:
+
+```bash
+cp telegram-notify.ini.example telegram-notify.ini
+```
+
+That command is only for first-time setup and may overwrite your real config.
+
+Also avoid destructive cleanup commands such as:
+
+```bash
+git clean -fdx
+```
+
+That can delete ignored files, including `telegram-notify.ini`.
+
+If you use the CLI symlink, no reinstall is usually needed after `git pull`.
+
+If you use the gateway service, restart it after updating:
+
+```bash
+systemctl restart telegram-gateway.service
+```
+
 ## Security notes
 
 The config file contains Telegram bot tokens and, optionally, the gateway API token.
