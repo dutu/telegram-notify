@@ -10,7 +10,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from telegram_notify_core import (
     DEFAULT_DESTINATION,
-    LEVEL_PREFIXES,
     PARSE_MODES,
     TelegramNotifyError,
     is_destination,
@@ -37,9 +36,9 @@ def parse_args():
 
     parser.add_argument(
         "--level",
-        choices=list(LEVEL_PREFIXES),
         type=str.lower,
-        help="Prepend a status symbol based on severity level"
+        metavar="LEVEL",
+        help="Prepend a status symbol based on severity level; invalid levels use info"
     )
 
     parser.add_argument(

@@ -166,6 +166,7 @@ Destination detection is config-based. If the first argument matches a configure
 ## Notification levels
 
 Use `--level` to prepend a status symbol to the message.
+Invalid levels fall back to `info` so the notification is still sent.
 
 Available levels:
 

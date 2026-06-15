@@ -9,6 +9,7 @@ from urllib import error, parse, request
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_FILE = BASE_DIR / "telegram-notify.ini"
 DEFAULT_DESTINATION = "default"
+DEFAULT_LEVEL = "info"
 
 LEVEL_PREFIXES = {
     "debug": "🔍",
@@ -122,8 +123,7 @@ def normalize_level(level):
         return None
 
     if normalized_level not in LEVEL_PREFIXES:
-        levels = ", ".join(LEVEL_PREFIXES)
-        raise TelegramNotifyError(f"invalid level '{level}', expected one of: {levels}")
+        return DEFAULT_LEVEL
 
     return normalized_level
 
