@@ -1,0 +1,12 @@
+# Project metadata; system deployment is handled by install.py.
+[project]
+name = "telegram-notify"
+version = "0.1.0"
+description = "Telegram notification CLI and optional HTTP gateway for Linux servers"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/dutu/telegram-notify"
