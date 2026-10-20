@@ -22,107 +22,27 @@ The gateway uses the same `telegram-notify.ini` file and the same shared deliver
 - systemd integration
 - Python standard library only
 
-## Dependencies
+## Installation
+
+Follow the [installation guide](README.md#installation), using
+`--with-gateway`. The installer creates the dedicated `telegram-gateway` account
+and installs the systemd unit, leaving the service stopped. This account's
+standard service group is used only by systemd; local CLI users need no group
+membership.
+
+For existing manual installations, first follow the
+[migration procedure](README.md#upgrade-an-existing-manual-installation).
+For later updates, follow [updating](README.md#updating).
+
+## Configuration
+
+Edit the shared configuration:
 
 ```bash
-python3 --version
-
-apt update
-apt install -y python3
+sudo nano /etc/telegram-notify/telegram-notify.ini
 ```
 
-## Create service user
-
-```bash
-useradd \
-  --system \
-  --no-create-home \
-  --shell /usr/sbin/nologin \
-  telegram-gateway
-```
-
-Verify:
-
-```bash
-id telegram-gateway
-```
-
-## Install application
-
-Clone the repository if it is not already installed:
-
-```bash
-cd /opt
-
-git clone https://github.com/YOUR_USERNAME/telegram-notify.git
-
-cd /opt/telegram-notify
-```
-
-The executable bit for `telegram-gateway.py` is tracked by Git, so you do not
-need to run `chmod` again after pulls.
-
-## Updates
-
-Use one stable clone directory, for example:
-
-```bash
-/opt/telegram-notify
-```
-
-Update the installed code in place:
-
-```bash
-cd /opt/telegram-notify
-git status --short
-git pull --ff-only
-```
-
-Do not copy the example config again during updates:
-
-```bash
-cp /opt/telegram-notify/telegram-notify.ini.example /opt/telegram-notify/telegram-notify.ini
-```
-
-That command is only for first-time setup and may overwrite your real config.
-
-Your real config file is ignored by Git and should remain here:
-
-```bash
-/opt/telegram-notify/telegram-notify.ini
-```
-
-Avoid destructive cleanup commands such as:
-
-```bash
-git clean -fdx
-```
-
-That can delete ignored files, including `telegram-notify.ini`.
-
-Restart the gateway after updating code:
-
-```bash
-systemctl restart telegram-gateway.service
-```
-
-If the service example changed, review the difference before replacing the
-installed service:
-
-```bash
-diff -u /etc/systemd/system/telegram-gateway.service /opt/telegram-notify/telegram-gateway.service.example
-```
-
-## Configure
-
-Create the shared config file:
-
-```bash
-cp /opt/telegram-notify/telegram-notify.ini.example /opt/telegram-notify/telegram-notify.ini
-nano /opt/telegram-notify/telegram-notify.ini
-```
-
-Example:
+The `[gateway]` section defines the shared API secret and listening address:
 
 ```ini
 [gateway]
@@ -133,61 +53,39 @@ listen_port = 8484
 [default]
 bot_token = 1234567890:AAA_DEFAULT_TOKEN
 chat_id = 188488206
-
-[infra]
-bot_token = 1234567890:BBB_INFRA_TOKEN
-chat_id = 222222222
-
-[personal]
-bot_token = 1234567890:CCC_PERSONAL_TOKEN
-chat_id = 333333333
 ```
 
-Lock down permissions so the gateway user can read the config:
+Replace the example credentials. Use a long random gateway secret, for example
+one generated with:
 
 ```bash
-chown root:telegram-gateway /opt/telegram-notify/telegram-notify.ini
-chmod 640 /opt/telegram-notify/telegram-notify.ini
+python3 -c 'import secrets; print(secrets.token_urlsafe(32))'
 ```
 
-## systemd service
+The file is owned by `root:root` with mode `0644`; the gateway and all local CLI
+users can read it. Every local user can also read the bot and API tokens.
+The gateway reads configuration at startup; restart it after configuration edits.
 
-Install the service file:
-
-```bash
-cp /opt/telegram-notify/telegram-gateway.service.example /etc/systemd/system/telegram-gateway.service
-systemctl daemon-reload
-```
+## Start and enable
 
 Start only when HTTP access is needed:
 
 ```bash
-systemctl start telegram-gateway.service
-```
-
-Stop when no longer needed:
-
-```bash
-systemctl stop telegram-gateway.service
-```
-
-Check status and logs:
-
-```bash
+sudo systemctl start telegram-gateway.service
 systemctl status telegram-gateway.service
-journalctl -u telegram-gateway.service -n 50 --no-pager
+curl --fail --silent http://127.0.0.1:8484/health
 ```
 
-Enable it only if it should start after reboot:
+Enable it to start after reboot:
 
 ```bash
-systemctl enable --now telegram-gateway.service
+sudo systemctl enable telegram-gateway.service
 ```
 
-Disable it again:
+Stop and disable it when no longer needed:
 
 ```bash
-systemctl disable --now telegram-gateway.service
+sudo systemctl disable --now telegram-gateway.service
 ```
 
 ## API
@@ -302,7 +200,7 @@ journalctl -u telegram-gateway.service -f
 Restart:
 
 ```bash
-systemctl restart telegram-gateway.service
+sudo systemctl restart telegram-gateway.service
 ```
 
 ## Security notes

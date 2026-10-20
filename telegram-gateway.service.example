@@ -9,8 +9,8 @@ Type=simple
 User=telegram-gateway
 Group=telegram-gateway
 
-WorkingDirectory=/opt/telegram-notify
-ExecStart=/usr/bin/env python3 /opt/telegram-notify/telegram-gateway.py
+WorkingDirectory=/opt/telegram-notify/current
+ExecStart=/usr/bin/python3 /opt/telegram-notify/current/telegram-gateway.py
 
 Restart=on-failure
 RestartSec=5

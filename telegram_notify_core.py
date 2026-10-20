@@ -6,8 +6,7 @@ from pathlib import Path
 from urllib import error, parse, request
 
 
-BASE_DIR = Path(__file__).resolve().parent
-CONFIG_FILE = BASE_DIR / "telegram-notify.ini"
+CONFIG_FILE = Path("/etc/telegram-notify/telegram-notify.ini")
 DEFAULT_DESTINATION = "default"
 DEFAULT_LEVEL = "info"
 
@@ -35,11 +34,15 @@ class TelegramNotifyError(Exception):
 def load_config(config_file=CONFIG_FILE):
     path = Path(config_file)
 
-    if not path.exists():
-        raise TelegramNotifyError(f"config file not found: {path}")
-
     config = configparser.ConfigParser()
-    config.read(path)
+    try:
+        with path.open(encoding="utf-8") as stream:
+            config.read_file(stream)
+    except OSError as exc:
+        raise TelegramNotifyError(f"cannot read config file {path}: {exc}") from exc
+    except (UnicodeError, configparser.Error) as exc:
+        # ParsingError can include full source lines containing credentials.
+        raise TelegramNotifyError(f"invalid INI file {path}: {type(exc).__name__}") from exc
 
     if DEFAULT_DESTINATION not in config:
         raise TelegramNotifyError(f"missing [{DEFAULT_DESTINATION}] destination in config")

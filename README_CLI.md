@@ -19,99 +19,31 @@ No daemon, no webserver, no listening port.
 - Inline URL buttons
 - Python standard library only
 
-## Installation
+## Installation and updates
 
-Clone the repository:
+Follow the [installation guide](README.md#installation) for the system-wide CLI.
+Clone the source into your home directory or another working directory outside
+`/opt`; the installer copies application files into `/opt/telegram-notify`.
 
-```bash
-cd /opt
+For an existing manual installation, first follow the
+[migration procedure](README.md#upgrade-an-existing-manual-installation).
+For later updates, follow [updating](README.md#updating).
 
-git clone https://github.com/YOUR_USERNAME/telegram-notify.git
-
-cd /opt/telegram-notify
-```
-
-Copy the example config:
-
-```bash
-cp telegram-notify.ini.example telegram-notify.ini
-```
-
-Edit the config:
-
-```bash
-nano telegram-notify.ini
-```
-
-Set config permissions:
-
-```bash
-chown root:root /opt/telegram-notify/telegram-notify.ini
-chmod 600 /opt/telegram-notify/telegram-notify.ini
-```
-
-The executable bit for `telegram-notify.py` is tracked by Git, so you do not need
-to run `chmod` again after pulls.
-
-Create a symlink:
-
-```bash
-ln -s /opt/telegram-notify/telegram-notify.py /usr/local/bin/telegram-notify
-```
-
-Verify:
+Verify the installed command:
 
 ```bash
 telegram-notify --help
 ```
 
-## Updates
-
-Use one stable clone directory, for example:
-
-```bash
-/opt/telegram-notify
-```
-
-Update the installed code in place:
-
-```bash
-cd /opt/telegram-notify
-git status --short
-git pull --ff-only
-```
-
-Do not copy the example config again during updates:
-
-```bash
-cp telegram-notify.ini.example telegram-notify.ini
-```
-
-That command is only for first-time setup and may overwrite your real config.
-
-Your real config file is ignored by Git and should remain here:
-
-```bash
-/opt/telegram-notify/telegram-notify.ini
-```
-
-Avoid destructive cleanup commands such as:
-
-```bash
-git clean -fdx
-```
-
-That can delete ignored files, including `telegram-notify.ini`.
-
-The `/usr/local/bin/telegram-notify` symlink points to the script in the clone,
-so no reinstall is usually needed after `git pull`.
+Installation and configuration require root. Any local user can run the CLI;
+there is no per-user configuration or notification group.
 
 ## Configuration
 
-Create:
+Edit the shared configuration created by the installer:
 
 ```bash
-/opt/telegram-notify/telegram-notify.ini
+sudo nano /etc/telegram-notify/telegram-notify.ini
 ```
 
 Example:
@@ -313,30 +245,14 @@ telegram-notify "Test from $(hostname)"
 If it fails, run:
 
 ```bash
-/opt/telegram-notify/telegram-notify.py "Test message"
+/opt/telegram-notify/current/telegram-notify.py "Test message"
 ```
 
 ## Security notes
 
-The config file contains Telegram bot tokens.
+The shared configuration is owned by `root:root`, with mode `0644`, in a `0755`
+directory. All local users can send notifications and read the bot tokens. Only
+root can edit the configuration or installed code.
 
-Recommended CLI-only permissions:
-
-```bash
-chmod 600 /opt/telegram-notify/telegram-notify.ini
-chown root:root /opt/telegram-notify/telegram-notify.ini
-```
-
-Do not commit the real config file to Git.
-
-Only commit:
-
-```text
-telegram-notify.ini.example
-```
-
-Add this to `.gitignore`:
-
-```text
-telegram-notify.ini
-```
+Keep real configuration out of the source checkout and Git. Commit only
+`telegram-notify.ini.example`.

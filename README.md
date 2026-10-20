@@ -1,89 +1,102 @@
 # telegram-notify
 
-Small Telegram notification toolkit for Linux servers.
+Small Telegram notification toolkit for Linux servers:
 
-It provides two entry points that share the same config and Telegram delivery code:
+- `telegram-notify`: local CLI for shell scripts, cron jobs, systemd hooks, backups,
+  UPS alerts, and monitoring scripts. It needs no daemon or listening port.
+- Optional HTTP gateway for tools that send webhooks.
 
-- `telegram-notify.py`: local CLI for shell scripts, cron jobs, systemd hooks, backup jobs, UPS alerts, and monitoring scripts.
-- `telegram-gateway.py`: optional local HTTP-to-Telegram gateway for tools that can only send webhooks.
+Both use the same Telegram delivery code and configuration. Features include
+multiple destinations, HTML and MarkdownV2, notification levels, silent messages,
+forum topics, link previews, and inline URL buttons. Python standard library only.
 
-The CLI has no daemon, no webserver, and no listening port. The gateway is a separate optional service and should only be enabled when HTTP access is needed.
+## Requirements
 
-## Features
+- Linux with Python 3.8 or newer at `/usr/bin/python3`.
+- Root access for installation, updates, migration, and configuration.
+- The optional gateway also requires systemd, `systemd-analyze`, and `useradd`.
+- Outbound HTTPS access to Telegram when sending notifications.
 
-- Shared Telegram profile configuration
-- Multiple Telegram bot destinations
-- Telegram HTML formatting
-- Telegram MarkdownV2 formatting
-- Notification levels
-- Silent notifications
-- Forum topic/thread support
-- Web page preview control
-- Inline URL buttons
-- Optional local HTTP API
-- Basic HTTP authentication via shared secret
-- systemd service example for the gateway
-- Python standard library only
+Install Python using your distribution's package manager if necessary. The
+installer does not install system packages or download source code.
 
-## Repository layout
+## Installation
 
-```text
-telegram-notify/
-├── README.md
-├── README_CLI.md
-├── README_GATEWAY.md
-├── telegram_notify_core.py
-├── telegram-notify.py
-├── telegram-gateway.py
-├── telegram-gateway.service.example
-└── telegram-notify.ini.example
-```
+1. Clone into a working directory outside `/opt`, for example your home directory:
 
-## Which component should I use?
+   ```bash
+   git clone https://github.com/dutu/telegram-notify.git "$HOME/telegram-notify"
+   cd "$HOME/telegram-notify"
+   ```
 
-Use the CLI when the sender is local and can execute a command:
+2. Preview and install the CLI:
 
-```bash
-telegram-notify --level error "Backup failed"
-```
+   ```bash
+   sudo python3 install.py install --dry-run
+   sudo python3 install.py install
+   telegram-notify --help
+   ```
 
-Use the gateway only when a tool needs HTTP access:
+   To include the optional gateway, use these commands instead:
 
-```bash
-curl \
-  -s \
-  -X POST \
-  http://127.0.0.1:8484/notify \
-  -H "Content-Type: application/json" \
-  -H "X-Notify-Token: CHANGE_ME_TO_A_LONG_RANDOM_SECRET" \
-  -d '{
-    "profile": "infra",
-    "level": "error",
-    "text": "Backup failed"
-  }'
-```
+   ```bash
+   sudo python3 install.py install --with-gateway --dry-run
+   sudo python3 install.py install --with-gateway
+   ```
 
-## Documentation
+   The gateway is installed but is never started or enabled automatically.
+   Adding `--with-gateway` later installs it alongside an existing CLI deployment.
+   Later installs/updates preserve the gateway selection even without the flag.
 
-- CLI setup and usage: [README_CLI.md](README_CLI.md)
-- HTTP gateway setup and usage: [README_GATEWAY.md](README_GATEWAY.md)
+3. Edit the shared configuration before sending notifications:
 
-## Shared configuration
+   ```bash
+   sudo nano /etc/telegram-notify/telegram-notify.ini
+   ```
 
-Both entry points use the same config file:
+   Replace the example bot tokens and chat IDs. The installer creates the file
+   only when absent and preserves existing contents during installation/updates.
 
-```bash
-/opt/telegram-notify/telegram-notify.ini
-```
+4. Send a test message as your normal user:
 
-Example:
+   ```bash
+   telegram-notify "Test notification"
+   ```
+
+   Successful delivery exits with status zero and no output. CLI usage and
+   formatting examples are in [README_CLI.md](README_CLI.md).
+
+5. If installed and configured, start the optional gateway:
+
+   ```bash
+   sudo systemctl start telegram-gateway.service
+   curl --fail --silent http://127.0.0.1:8484/health
+   sudo systemctl enable telegram-gateway.service
+   ```
+
+   The health response is `{"status": "ok"}`. Enabling is optional.
+   See [README_GATEWAY.md](README_GATEWAY.md) for API usage and operation.
+
+The source checkout is separate from the installation. It can be moved or removed
+after installation. Application files are copied into a release directory named
+by a source content digest; `current` selects the active release.
+
+| Purpose | Location |
+|---|---|
+| Installed application | `/opt/telegram-notify/releases/<source-digest>/` |
+| Active release link | `/opt/telegram-notify/current` |
+| Installer metadata | `/opt/telegram-notify/installation.json` |
+| CLI | `/usr/local/bin/telegram-notify` |
+| Shared configuration | `/etc/telegram-notify/telegram-notify.ini` |
+| Optional systemd unit | `/etc/systemd/system/telegram-gateway.service` |
+
+## Configuration and access
+
+All entry points read only `/etc/telegram-notify/telegram-notify.ini`, regardless
+of the calling user's home or current working directory. There is no per-user
+mode or fallback to configuration in the source tree.
 
 ```ini
-[gateway]
-api_token = CHANGE_ME_TO_A_LONG_RANDOM_SECRET
-listen_host = 127.0.0.1
-listen_port = 8484
-
 [default]
 bot_token = 1234567890:AAA_DEFAULT_TOKEN
 chat_id = 188488206
@@ -92,78 +105,182 @@ chat_id = 188488206
 bot_token = 1234567890:BBB_INFRA_TOKEN
 chat_id = 222222222
 
-[personal]
-bot_token = 1234567890:CCC_PERSONAL_TOKEN
-chat_id = 333333333
+[gateway]
+api_token = CHANGE_ME_TO_A_LONG_RANDOM_SECRET
+listen_host = 127.0.0.1
+listen_port = 8484
 ```
 
-The `[gateway]` section is only required when running `telegram-gateway.py`.
+The `[gateway]` section is needed only for the optional gateway. Replace its
+example secret before starting the service. Keep the listening address at
+`127.0.0.1` for local use.
 
-## Updates
+The INI is `root:root`, mode `0644`, in a `0755` directory. All local users can
+send notifications **and read the bot and gateway tokens**. Only root can edit
+installed code and configuration. No `telegram-notify` group is created. The
+gateway continues to run under its dedicated `telegram-gateway` service account.
 
-Keep the repository in a stable application directory, for example:
+Restart the gateway after configuration edits. The CLI reads the file on each
+invocation.
+
+## Upgrade an existing manual installation
+
+This procedure applies to the old Git checkout installed directly in
+`/opt/telegram-notify`, with the INI stored inside it. Pause notification-producing
+automation during the migration. Back up your configuration first.
+
+1. Obtain the updated source in a **separate checkout outside `/opt`**, as shown
+   in [installation](#installation). Run the remaining scripts from that checkout.
+   Do not update the old live clone in place: the new code uses the new INI path.
+
+2. If you use the gateway, note whether it is enabled, then stop it:
+
+   ```bash
+   systemctl is-enabled telegram-gateway.service
+   sudo systemctl stop telegram-gateway.service
+   ```
+
+3. Back up and migrate the INI:
+
+   ```bash
+   sudo cp -p /opt/telegram-notify/telegram-notify.ini /root/telegram-notify.ini.pre-migration
+   sudo python3 migrate-config.py --dry-run
+   sudo python3 migrate-config.py
+   ```
+
+   The script validates the INI, copies its exact contents into
+   `/etc/telegram-notify/telegram-notify.ini`, sets `root:root` and `0644`, verifies
+   the contents, then removes the old INI. It never prints credentials and refuses
+   to overwrite an existing destination, including on a second run.
+
+   If your old INI is elsewhere, use the same explicit source for both commands:
+
+   ```bash
+   sudo python3 migrate-config.py --source /path/to/old/telegram-notify.ini --dry-run
+   sudo python3 migrate-config.py --source /path/to/old/telegram-notify.ini
+   ```
+
+   If the destination already exists, compare and reconcile the files manually;
+   neither file is changed by the script. Moving the INI changes where old code
+   looks for credentials, so finish the following steps before resuming senders.
+
+4. Preserve the old checkout and remove its command link. First verify that the
+   command is the old symlink, rather than a custom executable:
+
+   ```bash
+   readlink /usr/local/bin/telegram-notify
+   ```
+
+   For the documented old installation, this prints
+   `/opt/telegram-notify/telegram-notify.py`. Then run:
+
+   ```bash
+   sudo mv /opt/telegram-notify /root/telegram-notify-legacy
+   sudo unlink /usr/local/bin/telegram-notify
+   ```
+
+   Use a fresh backup path if `/root/telegram-notify-legacy` already exists. If no
+   command link was installed, skip `readlink` and `unlink`. Preserve a custom
+   executable separately before replacing it.
+
+5. If you used the gateway, back up its old unit before installing the new one:
+
+   ```bash
+   sudo mv /etc/systemd/system/telegram-gateway.service /etc/systemd/system/telegram-gateway.service.pre-installer
+   sudo systemctl daemon-reload
+   ```
+
+   Preserve any custom unit settings separately. The installer refuses to replace
+   an unmanaged unit or an existing command, protecting local modifications.
+
+6. Run the [installation commands](#installation), adding `--with-gateway` if
+   needed. The migrated INI is preserved. Test the CLI and start the gateway
+   explicitly before resuming automation. Existing gateway enablement links are
+   preserved, so check its enablement and restore your intended setting.
+
+Keep the backup until delivery has been verified. To return to the old setup,
+stop the new gateway, uninstall the new deployment, move the old checkout back,
+restore the backed-up INI and unit, recreate the old CLI symlink, and reload
+systemd before restarting the old gateway.
+
+## Updating
+
+Update the administrator's source checkout, then run the installer from it:
 
 ```bash
-/opt/telegram-notify
-```
-
-Update the code in place:
-
-```bash
-cd /opt/telegram-notify
+cd "$HOME/telegram-notify"
 git status --short
 git pull --ff-only
+sudo python3 install.py update --dry-run
+sudo python3 install.py update
 ```
 
-Your real config file is not tracked by Git:
+For a gateway installation, stop the service **before either installer command**:
 
 ```bash
-/opt/telegram-notify/telegram-notify.ini
+sudo systemctl stop telegram-gateway.service
 ```
 
-Do not rerun the initial config copy during updates:
+The installer requires an inactive gateway, stages and validates the application,
+then switches `current` to the new release. It retains earlier releases and
+preserves the INI contents. Repeating installation/update from identical source
+reuses the same release. The INI's ownership and permissions are restored to
+`root:root` and `0644` on installation/update.
+
+Test notifications, then restart the gateway explicitly if needed:
 
 ```bash
-cp telegram-notify.ini.example telegram-notify.ini
+telegram-notify "Notification update verified"
+sudo systemctl start telegram-gateway.service
 ```
 
-That command is only for first-time setup and may overwrite your real config.
+Edited installed units or replaced command links cause the installer to stop
+before replacing them. Back up customizations and reconcile them with the shipped
+unit before retrying. Ordinary activation failures restore the previous command,
+release link, unit, and metadata; newly created configuration and service accounts
+are preserved. After a power loss or forced termination, inspect `current` and
+`installation.json` before retrying.
 
-Also avoid destructive cleanup commands such as:
+For recovery using an earlier retained release, run its installer as the source:
 
 ```bash
-git clean -fdx
+sudo python3 /opt/telegram-notify/releases/<previous-source-digest>/install.py update --dry-run
+sudo python3 /opt/telegram-notify/releases/<previous-source-digest>/install.py update
 ```
 
-That can delete ignored files, including `telegram-notify.ini`.
+Stop the gateway first if installed, and validate delivery before starting it.
 
-If you use the CLI symlink, no reinstall is usually needed after `git pull`.
+## Uninstalling
 
-If you use the gateway service, restart it after updating:
+If the gateway is installed, disable and stop it first:
 
 ```bash
-systemctl restart telegram-gateway.service
+sudo systemctl disable --now telegram-gateway.service
 ```
 
-## Security notes
-
-The config file contains Telegram bot tokens and, optionally, the gateway API token.
-
-For CLI-only usage, root-only permissions are usually appropriate:
+Preview and remove the managed application:
 
 ```bash
-chown root:root /opt/telegram-notify/telegram-notify.ini
-chmod 600 /opt/telegram-notify/telegram-notify.ini
+sudo python3 /opt/telegram-notify/current/install.py uninstall --dry-run
+sudo python3 /opt/telegram-notify/current/install.py uninstall
 ```
 
-For gateway usage with the dedicated `telegram-gateway` user, the service user must be able to read the same config:
+The INI, its directory, the gateway account, and system packages are preserved.
+The installer removes its command, release files, metadata, and optional unit;
+it refuses to delete modified releases or unrelated files. An empty application
+directory and installer lock may remain. There is no automatic configuration purge.
+
+## Development checks
+
+`pyproject.toml` declares the project metadata, initial version `0.1.0`, Python
+requirement, and empty runtime dependency list. System deployment uses
+`install.py`; the metadata file is included in each installed release.
+
+Run the standard-library test suite from the source checkout:
 
 ```bash
-chown root:telegram-gateway /opt/telegram-notify/telegram-notify.ini
-chmod 640 /opt/telegram-notify/telegram-notify.ini
+python3 -m unittest discover -s tests -v
 ```
-
-Keep the gateway bound to `127.0.0.1` unless you deliberately expose it behind proper firewalling and TLS.
 
 ## License
 
