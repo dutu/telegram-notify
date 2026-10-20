@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -57,6 +58,16 @@ class Workspace(unittest.TestCase):
 
 
 class InstallerTests(Workspace):
+    def test_installed_command_reports_version_without_configuration(self):
+        self.deploy()
+        self.paths.config.unlink()
+        result = subprocess.run(
+            [sys.executable, "-B", str(self.paths.command), "--version"],
+            capture_output=True, text=True, check=True,
+        )
+        self.assertEqual(result.stdout, "telegram-notify 0.1.0\n")
+        self.assertEqual(result.stderr, "")
+
     def test_install_cli_stages_only_application_files_and_sets_permissions(self):
         with mock.patch.object(install, "check_service") as service:
             self.deploy()

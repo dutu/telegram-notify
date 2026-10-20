@@ -22,27 +22,27 @@ installer does not install system packages or download source code.
 
 ## Installation
 
-1. Clone into a working directory outside `/opt`, for example your home directory:
+1. Clone into a working directory, for example your home directory:
 
-   ```bash
-   git clone https://github.com/dutu/telegram-notify.git "$HOME/telegram-notify"
-   cd "$HOME/telegram-notify"
-   ```
+```bash
+git clone https://github.com/dutu/telegram-notify.git "$HOME/telegram-notify"
+cd "$HOME/telegram-notify"
+```
 
 2. Preview and install the CLI:
 
-   ```bash
-   sudo python3 install.py install --dry-run
-   sudo python3 install.py install
-   telegram-notify --help
-   ```
+```bash
+sudo python3 install.py install --dry-run
+sudo python3 install.py install
+telegram-notify --help
+```
 
    To include the optional gateway, use these commands instead:
 
-   ```bash
-   sudo python3 install.py install --with-gateway --dry-run
-   sudo python3 install.py install --with-gateway
-   ```
+```bash
+sudo python3 install.py install --with-gateway --dry-run
+sudo python3 install.py install --with-gateway
+```
 
    The gateway is installed but is never started or enabled automatically.
    Adding `--with-gateway` later installs it alongside an existing CLI deployment.

@@ -18,6 +18,9 @@ from telegram_notify_core import (
 )
 
 
+VERSION = "0.1.0"
+
+
 def fail(message):
     print(f"error: {message}", file=sys.stderr)
     sys.exit(1)
@@ -26,6 +29,12 @@ def fail(message):
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Send Telegram notifications from local scripts."
+    )
+
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"telegram-notify {VERSION}",
     )
 
     parser.add_argument(

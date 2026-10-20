@@ -35,6 +35,12 @@ Verify the installed command:
 telegram-notify --help
 ```
 
+Display the installed version without sending a notification:
+
+```bash
+telegram-notify --version
+```
+
 Installation and configuration require root. Any local user can run the CLI;
 there is no per-user configuration or notification group.
 
