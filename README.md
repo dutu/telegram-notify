@@ -10,6 +10,17 @@ Both use the same Telegram delivery code and configuration. Features include
 multiple destinations, HTML and MarkdownV2, notification levels, silent messages,
 forum topics, link previews, and inline URL buttons. Python standard library only.
 
+## Table of contents
+
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration and access](#configuration-and-access)
+- [Upgrade an existing manual installation](#upgrade-an-existing-manual-installation)
+- [Updating](#updating)
+- [Uninstalling](#uninstalling)
+- [Development checks](#development-checks)
+- [License](#license)
+
 ## Requirements
 
 - Linux with Python 3.8 or newer at `/usr/bin/python3`.
@@ -50,29 +61,29 @@ sudo python3 install.py install --with-gateway
 
 3. Edit the shared configuration before sending notifications:
 
-   ```bash
-   sudo nano /etc/telegram-notify/telegram-notify.ini
-   ```
+```bash
+sudo nano /etc/telegram-notify/telegram-notify.ini
+```
 
    Replace the example bot tokens and chat IDs. The installer creates the file
    only when absent and preserves existing contents during installation/updates.
 
 4. Send a test message as your normal user:
 
-   ```bash
-   telegram-notify "Test notification"
-   ```
+```bash
+telegram-notify "Test notification"
+```
 
    Successful delivery exits with status zero and no output. CLI usage and
    formatting examples are in [README_CLI.md](README_CLI.md).
 
 5. If installed and configured, start the optional gateway:
 
-   ```bash
-   sudo systemctl start telegram-gateway.service
-   curl --fail --silent http://127.0.0.1:8484/health
-   sudo systemctl enable telegram-gateway.service
-   ```
+```bash
+sudo systemctl start telegram-gateway.service
+curl --fail --silent http://127.0.0.1:8484/health
+sudo systemctl enable telegram-gateway.service
+```
 
    The health response is `{"status": "ok"}`. Enabling is optional.
    See [README_GATEWAY.md](README_GATEWAY.md) for API usage and operation.
@@ -135,18 +146,18 @@ automation during the migration. Back up your configuration first.
 
 2. If you use the gateway, note whether it is enabled, then stop it:
 
-   ```bash
-   systemctl is-enabled telegram-gateway.service
-   sudo systemctl stop telegram-gateway.service
-   ```
+```bash
+systemctl is-enabled telegram-gateway.service
+sudo systemctl stop telegram-gateway.service
+```
 
 3. Back up and migrate the INI:
 
-   ```bash
-   sudo cp -p /opt/telegram-notify/telegram-notify.ini /root/telegram-notify.ini.pre-migration
-   sudo python3 migrate-config.py --dry-run
-   sudo python3 migrate-config.py
-   ```
+```bash
+sudo cp -p /opt/telegram-notify/telegram-notify.ini /root/telegram-notify.ini.pre-migration
+sudo python3 migrate-config.py --dry-run
+sudo python3 migrate-config.py
+```
 
    The script validates the INI, copies its exact contents into
    `/etc/telegram-notify/telegram-notify.ini`, sets `root:root` and `0644`, verifies
@@ -155,10 +166,10 @@ automation during the migration. Back up your configuration first.
 
    If your old INI is elsewhere, use the same explicit source for both commands:
 
-   ```bash
-   sudo python3 migrate-config.py --source /path/to/old/telegram-notify.ini --dry-run
-   sudo python3 migrate-config.py --source /path/to/old/telegram-notify.ini
-   ```
+```bash
+sudo python3 migrate-config.py --source /path/to/old/telegram-notify.ini --dry-run
+sudo python3 migrate-config.py --source /path/to/old/telegram-notify.ini
+```
 
    If the destination already exists, compare and reconcile the files manually;
    neither file is changed by the script. Moving the INI changes where old code
@@ -167,17 +178,17 @@ automation during the migration. Back up your configuration first.
 4. Preserve the old checkout and remove its command link. First verify that the
    command is the old symlink, rather than a custom executable:
 
-   ```bash
-   readlink /usr/local/bin/telegram-notify
-   ```
+```bash
+readlink /usr/local/bin/telegram-notify
+```
 
    For the documented old installation, this prints
    `/opt/telegram-notify/telegram-notify.py`. Then run:
 
-   ```bash
-   sudo mv /opt/telegram-notify /root/telegram-notify-legacy
-   sudo unlink /usr/local/bin/telegram-notify
-   ```
+```bash
+sudo mv /opt/telegram-notify /root/telegram-notify-legacy
+sudo unlink /usr/local/bin/telegram-notify
+```
 
    Use a fresh backup path if `/root/telegram-notify-legacy` already exists. If no
    command link was installed, skip `readlink` and `unlink`. Preserve a custom
@@ -185,10 +196,10 @@ automation during the migration. Back up your configuration first.
 
 5. If you used the gateway, back up its old unit before installing the new one:
 
-   ```bash
-   sudo mv /etc/systemd/system/telegram-gateway.service /etc/systemd/system/telegram-gateway.service.pre-installer
-   sudo systemctl daemon-reload
-   ```
+```bash
+sudo mv /etc/systemd/system/telegram-gateway.service /etc/systemd/system/telegram-gateway.service.pre-installer
+sudo systemctl daemon-reload
+```
 
    Preserve any custom unit settings separately. The installer refuses to replace
    an unmanaged unit or an existing command, protecting local modifications.
